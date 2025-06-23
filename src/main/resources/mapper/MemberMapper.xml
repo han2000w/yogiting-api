@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yogiting.api.member.mapper.MemberMapper">
+
+    <select id="getMember" resultType="com.yogiting.api.member.domain.Member">
+        SELECT * FROM members WHERE id = #{memberId}
+    </select>
+
+    <update id="updateMember" parameterType="com.yogiting.api.member.dto.MemberProfileUpdateReqDto">
+        UPDATE members
+        SET updated_at = NOW()
+        <if test="reqDto.nickname != null">
+            , nickname = #{reqDto.nickname}
+        </if>
+        <if test="reqDto.password != null">
+            , password = #{reqDto.password}
+        </if>
+        <if test="reqDto.phone != null">
+            , phone = #{reqDto.phone}
+        </if>
+        <if test="reqDto.newProfileImageUrl != null">
+            , profile_image_url = #{reqDto.newProfileImageUrl}
+        </if>
+        WHERE id = #{reqDto.memberId}
+    </update>
+
+</mapper>

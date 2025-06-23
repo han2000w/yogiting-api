@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yogiting.api.post.mapper.PostMapper">
+
+    <insert id="createPost" parameterType="com.yogiting.api.post.domain.Post" useGeneratedKeys="true" keyProperty="id" >
+        INSERT INTO posts (member_id, title, content)
+        VALUES (#{memberId}, #{title}, #{content})
+    </insert>
+
+    <update id="editPost">
+        UPDATE posts
+        SET
+            title = #{dto.title},
+            content = #{dto.content},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deletePost">
+        DELETE FROM posts where id = #{id}
+    </delete>
+
+    <select id="getPost" parameterType="Long" resultMap="PostWithAttachmentsMap">
+        SELECT
+            p.id as post_id,
+            p.member_id,
+            m.nickname as member_nickname,
+            m.profile_image_url as member_profile_image,
+            p.title,
+            p.content,
+            p.created_at as post_created_at,
+            p.updated_at as post_updated_at,
+
+            (SELECT COUNT(*) FROM post_views v WHERE v.post_id = p.id) as view_count,
+
+            a.id as attachment_id,
+            a.original_filename,
+            a.stored_filename,
+            a.file_url,
+            a.file_size,
+            a.content_type
+        FROM posts p
+        LEFT JOIN members m ON p.member_id = m.id
+        LEFT JOIN post_attachments a ON p.id = a.post_id
+        WHERE p.id = #{id}
+    </select>
+
+    <select id="getPostPreview" resultMap="PostPreviewMap">
+        SELECT
+            p.id,
+            p.title,
+            p.content,
+            p.member_id,
+            m.nickname,
+            m.profile_image_url,
+            p.created_at,
+
+            (SELECT COUNT(*) FROM post_views v WHERE v.post_id = p.id) as view_count,
+            (SELECT COUNT(*) FROM post_comments c WHERE c.post_id = p.id) as comment_count
+
+        FROM posts p
+        LEFT JOIN members m ON p.member_id = m.id
+        <where>
+            <if test="postIds != null and postIds.size() > 0">
+                p.id IN
+                <foreach collection="postIds" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+        </where>
+        ORDER BY p.created_at DESC
+    </select>
+    
+    <resultMap id="PostPreviewMap" type="com.yogiting.api.post.dto.PostPreviewResDto">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="content" column="content"/>
+        <result property="memberId" column="member_id"/>
+        <result property="memberNickname" column="nickname"/>
+        <result property="memberProfileImage" column="profile_image_url"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="viewCount" column="view_count"/>
+        <result property="commentCount" column="comment_count"/>
+    </resultMap>
+
+    <resultMap id="PostWithAttachmentsMap" type="com.yogiting.api.post.dto.PostDetailResDto">
+        <id property="id" column="post_id"/>
+        <result property="memberId" column="member_id"/>
+        <result property="memberNickname" column="member_nickname"/>
+        <result property="memberProfileImage" column="member_profile_image"/>
+        <result property="title" column="title"/>
+        <result property="content" column="content"/>
+        <result property="createdAt" column="post_created_at"/>
+        <result property="updatedAt" column="post_updated_at"/>
+        <result property="viewCount" column="view_count"/>
+
+        <!-- 첨부파일 컬렉션 -->
+        <collection property="attachedFiles" ofType="com.yogiting.api.common.dto.FileDto">
+            <id property="id" column="attachment_id"/>
+            <result property="originalFilename" column="original_filename"/>
+            <result property="storedFilename" column="stored_filename"/>
+            <result property="fileUrl" column="file_url"/>
+            <result property="fileSize" column="file_size"/>
+            <result property="contentType" column="content_type"/>
+        </collection>
+    </resultMap>
+
+</mapper>

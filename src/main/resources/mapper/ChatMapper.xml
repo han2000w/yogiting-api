@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yogiting.api.chat.mapper.ChatMapper">
+
+    <insert id="createChatRoom" parameterType="com.yogiting.api.chat.domain.ChatRoom" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO chat_rooms (name, description, room_type, created_by)
+        VALUES (#{name}, #{description}, #{roomType}, #{createdBy})
+    </insert>
+
+    <insert id="createChatParticipant">
+        INSERT INTO chat_participants (room_id, member_id)
+        VALUES
+            <foreach collection="memberIds" item="memberId" separator=",">
+                (#{roomId}, #{memberId})
+            </foreach>
+    </insert>
+
+    <delete id="deleteChatParticipant">
+        DELETE FROM chat_participants WHERE room_id = #{roomId} AND member_id = #{memberId}
+    </delete>
+
+    <select id="getChatRooms" resultType="com.yogiting.api.chat.dto.ChatRoomResDto">
+        SELECT
+            id AS roomId,
+            name,
+            description,
+            room_type AS roomType,
+            (SELECT COUNT(*) FROM chat_participants cp WHERE cp.room_id = r.id) AS memberCount
+            <if test="memberId != null">
+                , EXISTS(SELECT 1 FROM chat_participants p WHERE p.room_id = r.id AND p.member_id = #{memberId}) AS isParticipant
+            </if>
+        FROM chat_rooms r
+    </select>
+
+    <select id="getChatDirect">
+        SELECT
+            cr.id AS roomId,
+            cr.name AS name,
+            cr.room_type AS roomType,
+            other_member.id AS memberId,
+            other_member.nickname AS memberNickname,
+            other_member.profile_image_url AS memberProfileImage,
+            other_member.email AS memberEmail
+        FROM chat_rooms cr
+                 JOIN chat_participants cp1 ON cr.id = cp1.room_id AND cp1.member_id = #{memberId}
+                 JOIN chat_participants cp2 ON cr.id = cp2.room_id AND cp2.member_id != #{memberId}
+            JOIN members other_member ON cp2.member_id = other_member.id
+        WHERE cr.room_type = 'DIRECT'
+        ORDER BY cr.updated_at DESC
+    </select>
+
+    <select id="getChatMember" resultType="com.yogiting.api.chat.dto.ChatMemberResDto">
+        SELECT
+            id AS memberId,
+            nickname AS memberNickname,
+            email AS memberEmail,
+            profile_image_url AS memberProfileImage
+        FROM members
+    </select>
+
+    <select id="findDirectChatRoomId" resultType="long">
+        SELECT cr.id
+        FROM chat_participants cp1
+        INNER JOIN chat_participants cp2 ON cp1.room_id = cp2.room_id
+        INNER JOIN chat_rooms cr ON cp1.room_id = cr.id
+        WHERE cp1.member_id = #{member1}
+          AND cp2.member_id = #{member2}
+          AND cp1.member_id != cp2.member_id
+          AND cr.room_type = 'DIRECT'
+        LIMIT 1
+    </select>
+
+    <select id="getRoomInfo" resultType="com.yogiting.api.chat.dto.ChatRoomInfoResDto">
+        SELECT
+            id AS roomId,
+            name,
+            (SELECT COUNT(*) FROM chat_participants WHERE room_id = #{roomId}) AS memberCount
+        FROM chat_rooms
+        WHERE id = #{roomId}
+    </select>
+
+    <select id="isRoomParticipant" resultType="boolean">
+        SELECT EXISTS (SELECT * FROM chat_participants WHERE member_id = #{memberId} AND room_id = #{roomId})
+    </select>
+
+    <insert id="saveMessage">
+        INSERT INTO chat_messages (room_id, sender_id, content)
+        VALUES (#{roomId}, #{senderId}, #{content})
+    </insert>
+
+    <select id="getChatHistory" resultType="com.yogiting.api.chat.dto.ChatMessageDto">
+        SELECT
+            m.sender_id AS senderId,
+            m.content,
+            m.created_at AS createdAt,
+            u.nickname AS senderNickname,
+            u.profile_image_url AS senderProfileImageUrl
+        FROM chat_messages m
+        JOIN members u ON sender_id = u.id
+        WHERE m.room_id = #{roomId}
+        ORDER by m.created_at ASC;
+    </select>
+
+</mapper>
+
+

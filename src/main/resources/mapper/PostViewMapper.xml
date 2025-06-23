@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yogiting.api.post.mapper.PostViewMapper">
+
+    <insert id="addViewCount" parameterType="map">
+        INSERT IGNORE INTO post_views (post_id, member_id)
+        VALUES (#{postId}, #{memberId})
+    </insert>
+
+</mapper>

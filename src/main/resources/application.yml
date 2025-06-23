@@ -1,0 +1,50 @@
+server:
+  port: 8082
+spring:
+  application:
+    name: api
+  datasource:
+    driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+    url: jdbc:log4jdbc:mariadb://10.104.0.2:3306/yogiting
+    username: ''
+    password: ''
+  data:
+    redis:
+      host: 10.104.0.3
+      port: 6379
+  elasticsearch:
+    uris: http://10.104.0.3:9200
+
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  config-location: classpath:mybatis-config.xml
+
+jwt:
+  secretKey: b2F1dGhzZXJ2ZXJzZWNyZXRhY2Nlc3N0b2tlbm9hdXRoc2VydmVyc2VjcmV0YWNjZXNzdG9rZW5vYXV0aHNlcnZlcnNlY3JldGFjY2Vzc3Rva2Vu
+  expiration: 180
+
+  secretKeyRt: b2F1dGhzZXJ2ZXJzZWNyZXRyZWZyZXNodG9rZW5vYXV0aHNlcnZlcnNlY3JldHJlZnJlc2h0b2tlbm9hdXRoc2VydmVyc2VjcmV0cmVmcmVzaHRva2Vu
+  expirationRt: 1440
+
+logging:
+  level:
+    root: info
+    org.elasticsearch.client: trace
+    jdbc:
+      sqlonly: info
+      sqltiming: off
+      audit: off
+      resultset: off
+      resultsettable: info
+      connection: off
+
+cloud:
+  aws:
+    credentials:
+      access-key: ''
+      secret-key: ''
+    region:
+      static: ap-northeast-2
+      auto: false
+    s3:
+      bucket: yogiting

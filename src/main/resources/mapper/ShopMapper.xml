@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yogiting.api.shop.mapper.ShopMapper">
+
+    <select id="getItems" resultType="com.yogiting.api.shop.dto.ShopItemResDto">
+        SELECT id, name, description, price, image_url AS imageUrl FROM shop_items
+    </select>
+
+    <insert id="addPurchaseHistory" parameterType="com.yogiting.api.shop.dto.ShopPurchaseReqDto" useGeneratedKeys="true" keyProperty="purchaseId">
+        INSERT INTO shop_purchase_histories (member_id, total_amount)
+        VALUES (#{memberId}, #{totalAmount})
+    </insert>
+
+    <insert id="addPurchaseItem" parameterType="com.yogiting.api.shop.dto.ItemDto">
+        INSERT INTO shop_purchase_items (purchase_id, item_id, item_name, item_price, quantity)
+        VALUES
+            <foreach collection="itemDto" item="item" separator=",">
+                (#{purchaseId}, #{item.itemId}, #{item.itemName}, #{item.price}, #{item.quantity})
+            </foreach>
+    </insert>
+
+    <select id="getPurchaseHistory" resultMap="ShopPurchaseHistoryMap">
+        SELECT
+            h.id AS shop_purchase_histories_id,
+            h.total_amount,
+            i.item_name,
+            i.item_price,
+            i.quantity,
+            h.created_at
+        FROM shop_purchase_histories h
+        LEFT JOIN shop_purchase_items i ON h.id = i.purchase_id
+        WHERE h.member_id = #{memberId}
+        ORDER BY created_at DESC
+    </select>
+
+    <resultMap id="ShopPurchaseHistoryMap" type="com.yogiting.api.shop.dto.ShopPurchaseHistoryResDto">
+        <id property="purchaseHistoryId" column="shop_purchase_histories_id"/>
+        <result property="totalAmount" column="total_amount"/>
+        <result property="createdAt" column="created_at"/>
+
+        <collection property="items" ofType="com.yogiting.api.shop.dto.ItemDto">
+            <result property="itemName" column="item_name"/>
+            <result property="price" column="item_price"/>
+            <result property="quantity" column="quantity"/>
+        </collection>
+    </resultMap>
+
+</mapper>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yogiting.api.point.mapper.PointMapper">
+
+    <insert id="createWallet" parameterType="Long">
+        INSERT INTO wallets (member_id)
+        VALUES (#{memberId})
+    </insert>
+
+    <select id="getPoint" resultType="long">
+        SELECT point FROM wallets WHERE member_id = #{memberId}
+    </select>
+
+    <update id="addPoint">
+        UPDATE wallets
+        SET point = point + #{point}
+        WHERE member_id = #{memberId}
+    </update>
+
+    <update id="removePoint">
+        UPDATE wallets
+        SET point = point - #{point}
+        WHERE member_id = #{memberId}
+    </update>
+</mapper>
